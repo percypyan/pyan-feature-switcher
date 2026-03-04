@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ProfilePosition</key>
+	<dict>
+		<key>Release</key>
+		<string>bottom</string>
+		<key>Debug</key>
+		<string>top</string>
+	</dict>
+	<key>UseOnboarding</key>
+	<dict>
+		<key>iOS</key>
+		<true/>
+		<key>tvOS</key>
+		<dict>
+			<key>Debug</key>
+			<string>disabled</string>
+			<key>Release</key>
+			<string>enabled</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
