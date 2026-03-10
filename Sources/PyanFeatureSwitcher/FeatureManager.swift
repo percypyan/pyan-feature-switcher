@@ -31,10 +31,10 @@ import Logging
 @Observable
 public final class FeatureManager {
 	private var states: [String: any FeatureState]? = nil
-	private var features: [any Feature.Type] = []
+	internal private(set) var features: [any Feature.Type] = []
 
 	/// The switcher responsible for resolving each registered feature's state during ``bootstrap()``.
-	let switcher: FeatureSwitcher
+	internal let switcher: FeatureSwitcher
 
 	/// Indicates if this manager ready to use.
 	public var isReady: Bool { states != nil }
@@ -65,12 +65,16 @@ public final class FeatureManager {
 	/// - Returns: `self`, for chaining.
 	@discardableResult
 	public func register<F: Feature>(_ type: F.Type) -> Self {
+		assert(
+			!features.contains(where: { $0.identifier == F.identifier }),
+			"Feature \(F.identifier) as already been registered"
+		)
 		features.append(type)
 		return self
 	}
 
 	/// Returns the resolved state of the given feature, or `nil` if unknown.
-	/// - Parameter featureType: The ``Feature`` type to query.
+	/// - Parameter feature: The ``Feature`` type to query.
 	/// - Returns: The resolved state, or the default one.
 	public func state<F: Feature>(of feature: F.Type) -> F.State {
 		assert(isReady, "FeatureManager has not been bootstrapped")
@@ -135,5 +139,19 @@ extension FeatureManager {
 		metadata["features"] = .dictionary(metaFeatures)
 
 		return metadata
+	}
+}
+
+extension FeatureManager {
+	internal func synchronousBootstrap() {
+		guard !isReady else {
+			assertionFailure("FeatureManager has already been bootstrapped")
+			return
+		}
+		guard let switcher = switcher as? ConstantSwitcher else {
+			assertionFailure("Unexpected switcher type for synchronous bootstrap")
+			return
+		}
+		states = switcher.generateState(for: features)
 	}
 }

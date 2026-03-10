@@ -20,7 +20,17 @@ import Synchronization
 public final class ConstantSwitcher: FeatureSwitcher {
 	let states = Mutex<[String: any FeatureState]>([:])
 
-	public init() {}
+	#if DEBUG
+	private let isOverridable: Bool
+
+	internal init(overridable: Bool) {
+		self.isOverridable = overridable
+	}
+	#endif
+
+	public convenience init() {
+		self.init(overridable: false)
+	}
 
 	/// Sets a constant state for the given feature.
 	/// - Parameters:
@@ -42,7 +52,7 @@ public final class ConstantSwitcher: FeatureSwitcher {
 		return constant(F.identifier, state: enabled ? BooleanState.enabled : .disabled)
 	}
 
-	public func generateState(for features: [any Feature.Type]) async throws -> [String: any FeatureState] {
+	public func generateState(for features: [any Feature.Type]) -> [String: any FeatureState] {
 		return states.withLock { $0 }
 	}
 }
@@ -51,7 +61,7 @@ extension ConstantSwitcher {
 	@discardableResult
 	func constant(_ identifier: String, state: any FeatureState) -> Self {
 		return states.withLock { states in
-			guard states[identifier] == nil else {
+			guard isOverridable || states[identifier] == nil else {
 				assertionFailure("State has already been for feature \(identifier)")
 				return self
 			}

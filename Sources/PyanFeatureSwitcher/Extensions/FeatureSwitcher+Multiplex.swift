@@ -6,24 +6,6 @@
 //
 
 public extension FeatureSwitcher {
-	/// Creates a ``MultiplexSwitcher`` from the given list of switchers.
-	///
-	/// Later switchers in the array take precedence over earlier ones.
-	///
-	/// ```swift
-	/// let switcher = ConstantSwitcher.multiplex([
-	///     FileSwitcher.propertyList(path: fileURL),
-	///     ConstantSwitcher().constant(DarkMode.self, enabled: true)
-	/// ])
-	/// ```
-	///
-	/// - Parameter switchers: The switchers to compose. Must not be empty.
-	/// - Returns: A ``MultiplexSwitcher`` that merges results from all provided switchers.
-	static func multiplex(_ switchers: [any FeatureSwitcher]) -> MultiplexSwitcher {
-		precondition(!switchers.isEmpty, "switchers MUST NOT be empty")
-		return MultiplexSwitcher(switchers: switchers)
-	}
-
 	/// Combines `self` with another switcher into a ``MultiplexSwitcher``.
 	///
 	/// The receiver (`self`) takes precedence over the provided switcher.

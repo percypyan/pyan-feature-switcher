@@ -24,7 +24,7 @@ public struct LocalFileSwitcherLoader: FileSwitcherLoader {
 		self.factory = factory
 	}
 
-	public func loadData(filters: Set<String>) async throws -> Data {
+	public func loadData(filters: Set<String>) throws -> Data {
 		guard let url = path ?? factory?(filters) else {
 			// Never happens since init options ensure one of `path` or `factory`
 			// will always be set.

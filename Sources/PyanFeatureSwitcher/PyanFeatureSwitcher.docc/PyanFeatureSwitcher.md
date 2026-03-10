@@ -16,7 +16,7 @@ managing feature flags. Features are defined as types conforming to
 - **Features** — types conforming to ``Feature`` with an associated ``FeatureState``
 - **Switchers** — strategies that decide which state a feature should be in
 - **Caching** — persistence of resolved states across launches via ``SwitcherCache``
-- **Manager** — ``FeaturesManager`` ties everything together and exposes a query API
+- **Manager** — ``FeatureManager`` ties everything together and exposes a query API
 
 ### Quick Example
 
@@ -31,7 +31,7 @@ let switcher = ConstantSwitcher()
     .constant(DarkMode.self, enabled: true)
 
 // 3. Bootstrap the manager
-let manager = FeaturesManager(switcher: switcher)
+let manager = FeatureManager(switcher: switcher)
     .register(DarkMode.self)
 
 try await manager.bootstrap()
@@ -52,7 +52,7 @@ For a step-by-step walkthrough see <doc:GettingStarted>.
 - ``Feature``
 - ``FeatureState``
 - ``BooleanState``
-- ``FeaturesManager``
+- ``FeatureManager``
 
 ### Switchers
 
@@ -80,3 +80,7 @@ For a step-by-step walkthrough see <doc:GettingStarted>.
 - ``SwitcherCache``
 - ``InMemorySwitcherCache``
 - ``UserDefaultsSwitcherCache``
+
+### Convenience
+
+- ``ConstantFeatureManagerFactory``

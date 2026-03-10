@@ -39,7 +39,7 @@ types and must return a dictionary that maps each feature's
   the feature's associated `State` enum. Use `Feature.stateType` and
   its `allCases` to look up valid values.
 - **Omitting a feature is allowed.** If you don't return a key for a
-  given feature, ``FeaturesManager/state(of:)`` will return a
+  given feature, ``FeatureManager/state(of:)`` will return a
   value default for it.
 
 ## Example: Remote Configuration Switcher
@@ -80,7 +80,7 @@ struct RemoteSwitcher: FeatureSwitcher {
 Then use it like any other switcher:
 
 ```swift
-let manager = FeaturesManager(
+let manager = FeatureManager(
     switcher: RemoteSwitcher(url: configURL)
 )
 .register(DarkMode.self)
@@ -105,8 +105,8 @@ against your data source.
 ## Adding Logging Metadata
 
 ``FeatureSwitcher`` exposes a ``FeatureSwitcher/logMetadata``
-property that ``FeaturesManager`` includes in its own
-``FeaturesManager/logMetadata``. Override it to surface
+property that ``FeatureManager`` includes in its own
+``FeatureManager/logMetadata``. Override it to surface
 configuration details useful for diagnostics:
 
 ```swift

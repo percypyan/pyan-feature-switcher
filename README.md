@@ -44,7 +44,7 @@ enum DarkMode: Feature {}
 let switcher = ConstantSwitcher()
     .constant(DarkMode.self, enabled: true)
 
-let manager = FeaturesManager(switcher: switcher)
+let manager = FeatureManager(switcher: switcher)
     .register(DarkMode.self)
 
 try await manager.bootstrap()

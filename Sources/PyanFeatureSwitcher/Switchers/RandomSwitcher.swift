@@ -78,7 +78,7 @@ public final class RandomSwitcher: FeatureSwitcher {
 		return self.probabilities(for: featureType.identifier, proba)
 	}
 
-	public func generateState(for features: [any Feature.Type]) async throws -> [String: any FeatureState] {
+	public func generateState(for features: [any Feature.Type]) -> [String: any FeatureState] {
 		var states: [String: any FeatureState] = [:]
 
 		for featureType in features {

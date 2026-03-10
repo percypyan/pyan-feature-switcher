@@ -156,13 +156,6 @@ let switcher = MultiplexSwitcher(switchers: [
 Or equivalently, using the extensions:
 
 ```swift
-let switcher = FeatureSwitcher.multiplex([
-	FileSwitcher.propertyList(path: fileURL),
-	ConstantSwitcher().constant(DarkMode.self, enabled: true) // Has priority
-])
-```
-
-```swift
 let switcher = ConstantSwitcher() // Has priority
     .constant(DarkMode.self, enabled: true)
 	.multiplex(FileSwitcher.propertyList(path: fileURL))
@@ -174,10 +167,10 @@ Every manager needs to be booststraped once and only once. This
 will trigger the effective setting of a state of each registered feature
 using its switcher.
 
-Register your features, then call ``FeaturesManager/bootstrap()``:
+Register your features, then call ``FeatureManager/bootstrap()``:
 
 ```swift
-let manager = FeaturesManager(switcher: switcher)
+let manager = FeatureManager(switcher: switcher)
     .register(DarkMode.self)
     .register(OnboardingFlow.self)
 
@@ -186,13 +179,13 @@ try await manager.bootstrap()
 
 ## Querying State
 
-For boolean features use the convenience ``FeaturesManager/isEnabled(_:)``:
+For boolean features use the convenience ``FeatureManager/isEnabled(_:)``:
 
 ```swift
 if manager.isEnabled(DarkMode.self) { ... }
 ```
 
-For multi-variant features use ``FeaturesManager/state(of:)``:
+For multi-variant features use ``FeatureManager/state(of:)``:
 
 ```swift
 switch manager.state(of: OnboardingFlow.self) {
