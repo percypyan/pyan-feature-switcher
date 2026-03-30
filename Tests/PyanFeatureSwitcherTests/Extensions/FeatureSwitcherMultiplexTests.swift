@@ -20,7 +20,7 @@ struct FeatureSwitcherMultiplexTests {
 		let second = ConstantSwitcher()
 			.constant(ProfilePosition.self, state: .bottom)
 
-		let multiplexed = MultiplexSwitcher.multiplex([first, second])
+		let multiplexed = MultiplexSwitcher(switchers: [first, second])
 
 		let states = try await multiplexed.generateState(
 			for: [UseOnboarding.self, ProfilePosition.self]
@@ -37,7 +37,7 @@ struct FeatureSwitcherMultiplexTests {
 		let second = ConstantSwitcher()
 			.constant(UseOnboarding.self, enabled: false)
 
-		let multiplexed = MultiplexSwitcher.multiplex([first, second])
+		let multiplexed = MultiplexSwitcher(switchers: [first, second])
 
 		let states = try await multiplexed.generateState(for: [UseOnboarding.self])
 

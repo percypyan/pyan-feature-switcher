@@ -19,11 +19,11 @@ struct LocalFileSwitcherLoaderTests {
 		)
 
 		let loader = LocalFileSwitcherLoader(path: url)
-		let data = try await loader.loadData(filters: [])
+		let data = try loader.loadData(filters: [])
 
 		#expect(!data.isEmpty)
 
-		let filteredData = try await loader.loadData(filters: ["Debug"])
+		let filteredData = try loader.loadData(filters: ["Debug"])
 		#expect(!filteredData.isEmpty)
 	}
 

@@ -16,7 +16,7 @@ struct RandomSwitcherTests {
 	func generatesStateForEachFeature() async throws {
 		let switcher = RandomSwitcher(randomGenerator: { _ in 0.5 })
 
-		let states = try await switcher.generateState(
+		let states = switcher.generateState(
 			for: [UseOnboarding.self, ProfilePosition.self]
 		)
 
@@ -29,7 +29,7 @@ struct RandomSwitcherTests {
 	func emptyFeaturesReturnsEmpty() async throws {
 		let switcher = RandomSwitcher(randomGenerator: { _ in 0.5 })
 
-		let states = try await switcher.generateState(for: [])
+		let states = switcher.generateState(for: [])
 
 		#expect(states.isEmpty)
 	}
@@ -43,7 +43,7 @@ struct RandomSwitcherTests {
 		let switcher = RandomSwitcher(randomGenerator: { _ in 0.1 })
 			.probabilities(for: UseOnboarding.self, [.enabled: 0.5, .disabled: 0.5])
 
-		let states = try await switcher.generateState(for: [UseOnboarding.self])
+		let states = switcher.generateState(for: [UseOnboarding.self])
 
 		#expect(states["UseOnboarding"] as? BooleanState == .enabled)
 	}
@@ -53,7 +53,7 @@ struct RandomSwitcherTests {
 		let switcher = RandomSwitcher(randomGenerator: { _ in 0.6 })
 			.probabilities(for: UseOnboarding.self, [.enabled: 0.5, .disabled: 0.5])
 
-		let states = try await switcher.generateState(for: [UseOnboarding.self])
+		let states = switcher.generateState(for: [UseOnboarding.self])
 
 		#expect(states["UseOnboarding"] as? BooleanState == .disabled)
 	}
@@ -66,7 +66,7 @@ struct RandomSwitcherTests {
 				[.top: 0.33, .middle: 0.34, .bottom: 0.33]
 			)
 
-		let states = try await switcher.generateState(for: [ProfilePosition.self])
+		let states = switcher.generateState(for: [ProfilePosition.self])
 
 		#expect(states["ProfilePosition"] as? ProfilePosition.State == .top)
 	}
@@ -79,7 +79,7 @@ struct RandomSwitcherTests {
 				[.top: 0.33, .middle: 0.34, .bottom: 0.33]
 			)
 
-		let states = try await switcher.generateState(for: [ProfilePosition.self])
+		let states = switcher.generateState(for: [ProfilePosition.self])
 
 		#expect(states["ProfilePosition"] as? ProfilePosition.State == .middle)
 	}
@@ -92,7 +92,7 @@ struct RandomSwitcherTests {
 				[.top: 0.33, .middle: 0.34, .bottom: 0.33]
 			)
 
-		let states = try await switcher.generateState(for: [ProfilePosition.self])
+		let states = switcher.generateState(for: [ProfilePosition.self])
 
 		#expect(states["ProfilePosition"] as? ProfilePosition.State == .bottom)
 	}
@@ -104,12 +104,12 @@ struct RandomSwitcherTests {
 		// BooleanState has 2 cases, so default probability = 0.5 each
 		// random = 0.1 < 0.5 → first case (.enabled)
 
-		let states = try await RandomSwitcher(randomGenerator: { _ in 0.49 })
+		let states = RandomSwitcher(randomGenerator: { _ in 0.49 })
 			.generateState(for: [UseOnboarding.self])
 
 		#expect(states["UseOnboarding"] as? BooleanState == .enabled)
 
-		let states2 = try await RandomSwitcher(randomGenerator: { _ in 0.51 })
+		let states2 = RandomSwitcher(randomGenerator: { _ in 0.51 })
 			.generateState(for: [UseOnboarding.self])
 
 		#expect(states2["UseOnboarding"] as? BooleanState == .disabled)
@@ -120,7 +120,7 @@ struct RandomSwitcherTests {
 		// random = 0.9 > 0.5 → second case (.disabled)
 		let switcher = RandomSwitcher(randomGenerator: { _ in 0.9 })
 
-		let states = try await switcher.generateState(for: [UseOnboarding.self])
+		let states = switcher.generateState(for: [UseOnboarding.self])
 
 		#expect(states["UseOnboarding"] as? BooleanState == .disabled)
 	}
@@ -143,7 +143,7 @@ struct RandomSwitcherTests {
 				[.top: 0.20]
 			)
 
-		let states = try await switcher.generateState(for: [ProfilePosition.self])
+		let states = switcher.generateState(for: [ProfilePosition.self])
 
 		#expect(states["ProfilePosition"] as? ProfilePosition.State == expected)
 	}
@@ -159,7 +159,7 @@ struct RandomSwitcherTests {
 				[.top: 0.33, .middle: 0.34, .bottom: 0.33]
 			)
 
-		let states = try await switcher.generateState(
+		let states = switcher.generateState(
 			for: [UseOnboarding.self, ProfilePosition.self]
 		)
 
@@ -174,7 +174,7 @@ struct RandomSwitcherTests {
 		let switcher = RandomSwitcher(cache: cache, randomGenerator: { _ in 0.1 })
 			.probabilities(for: UseOnboarding.self, [.enabled: 0.5, .disabled: 0.5])
 
-		_ = try await switcher.generateState(for: [UseOnboarding.self])
+		_ = switcher.generateState(for: [UseOnboarding.self])
 
 		let cached = cache.load(for: UseOnboarding.self)
 		#expect(cached as? BooleanState == .enabled)
@@ -187,14 +187,14 @@ struct RandomSwitcherTests {
 		let switcher = RandomSwitcher(cache: cache, randomGenerator: { _ in 0.1 })
 			.probabilities(for: UseOnboarding.self, [.enabled: 0.5, .disabled: 0.5])
 
-		let first = try await switcher.generateState(for: [UseOnboarding.self])
+		let first = switcher.generateState(for: [UseOnboarding.self])
 		#expect(first["UseOnboarding"] as? BooleanState == .enabled)
 
 		// Second call with different random that would normally pick .disabled
 		let switcher2 = RandomSwitcher(cache: cache, randomGenerator: { _ in 0.9 })
 			.probabilities(for: UseOnboarding.self, [.enabled: 0.5, .disabled: 0.5])
 
-		let second = try await switcher2.generateState(for: [UseOnboarding.self])
+		let second = switcher2.generateState(for: [UseOnboarding.self])
 		#expect(second["UseOnboarding"] as? BooleanState == .enabled)
 	}
 
@@ -209,7 +209,7 @@ struct RandomSwitcherTests {
 			return Double.random(in: range)
 		})
 
-		let states = try await switcher.generateState(for: [UseOnboarding.self])
+		let states = switcher.generateState(for: [UseOnboarding.self])
 
 		#expect(states["UseOnboarding"] as? BooleanState == .disabled)
 		#expect(!generatorCalled.withLock { $0 })
@@ -231,7 +231,7 @@ struct RandomSwitcherTests {
 				[.top: 0.33, .middle: 0.34, .bottom: 0.33]
 			)
 
-		let states = try await switcher.generateState(
+		let states = switcher.generateState(
 			for: [UseOnboarding.self, ProfilePosition.self]
 		)
 

@@ -16,7 +16,7 @@ struct FeatureManagerTests {
 	@Test("bootstrap passes registered features to switcher")
 	func bootstrapPassesFeatures() async throws {
 		let spy = SpyFeatureSwitcher()
-		let manager = FeatureManager(switcher: spy)
+		let manager = await FeatureManager(switcher: spy)
 			.register(UseOnboarding.self)
 			.register(ProfilePosition.self)
 
@@ -29,7 +29,7 @@ struct FeatureManagerTests {
 
 	@Test("state(of:) returns matching state after bootstrap")
 	func stateReturnsValue() async throws {
-		let manager = FeatureManager(
+		let manager = await FeatureManager(
 			switcher: ConstantSwitcher()
 				.constant(UseOnboarding.self, enabled: true)
 				.constant(ProfilePosition.self, state: .middle)
@@ -47,7 +47,7 @@ struct FeatureManagerTests {
 
 	@Test("isEnabled returns true when state is enabled")
 	func isEnabledTrue() async throws {
-		let manager = FeatureManager(
+		let manager = await FeatureManager(
 			switcher: ConstantSwitcher()
 				.constant(UseOnboarding.self, enabled: true)
 		)
@@ -60,7 +60,7 @@ struct FeatureManagerTests {
 
 	@Test("isEnabled returns false when state is disabled")
 	func isEnabledFalse() async throws {
-		let manager = FeatureManager(
+		let manager = await FeatureManager(
 			switcher: ConstantSwitcher()
 				.constant(UseOnboarding.self, enabled: false)
 		)
@@ -73,7 +73,7 @@ struct FeatureManagerTests {
 
 	@Test("isEnabled returns false when feature has no state")
 	func isEnabledFalseWhenMissing() async throws {
-		let manager = FeatureManager(
+		let manager = await FeatureManager(
 			switcher: ConstantSwitcher()
 		)
 		.register(UseOnboarding.self)
@@ -84,25 +84,51 @@ struct FeatureManagerTests {
 	}
 
 	@Test("Generation of logMetadata")
-	func shouldReturnInfoAboutManagerState() async throws {
+	func metadataShouldReturnInfoAboutManagerState() async throws {
 		let manager = FeatureManager(
 			switcher: ConstantSwitcher()
 				.constant(ProfilePosition.self, state: .top)
 		)
 
-		#expect(manager.logMetadata == [
-			"isReady": "false",
-			"switcher": ["type": "PyanFeatureSwitcher.ConstantSwitcher"],
-			"features": [:]
-		])
+		#expect(manager.logMetadata == [:])
 
-		manager
+		await manager
 			.register(UseOnboarding.self)
 			.register(ProfilePosition.self)
 
 		#expect(manager.logMetadata == [
+			"UseOnboarding": "<unknown>",
+			"ProfilePosition": "<unknown>"
+		])
+
+		try await manager.bootstrap()
+
+		#expect(manager.logMetadata == [
+			"UseOnboarding": "<none>",
+			"ProfilePosition": "top"
+		])
+	}
+
+	@Test("Generation of logCompleteMetadata")
+	func completeMetadataShouldReturnInfoAboutManagerState() async throws {
+		let manager = FeatureManager(
+			switcher: ConstantSwitcher()
+				.constant(ProfilePosition.self, state: .top)
+		)
+
+		#expect(manager.logCompleteMetadata == [
 			"isReady": "false",
-			"switcher": ["type": "PyanFeatureSwitcher.ConstantSwitcher"],
+			"switcher": ["type": "ConstantSwitcher"],
+			"features": [:]
+		])
+
+		await manager
+			.register(UseOnboarding.self)
+			.register(ProfilePosition.self)
+
+		#expect(manager.logCompleteMetadata == [
+			"isReady": "false",
+			"switcher": ["type": "ConstantSwitcher"],
 			"features": [
 				"UseOnboarding": "<unknown>",
 				"ProfilePosition": "<unknown>"
@@ -111,9 +137,9 @@ struct FeatureManagerTests {
 
 		try await manager.bootstrap()
 
-		#expect(manager.logMetadata == [
+		#expect(manager.logCompleteMetadata == [
 			"isReady": "true",
-			"switcher": ["type": "PyanFeatureSwitcher.ConstantSwitcher"],
+			"switcher": ["type": "ConstantSwitcher"],
 			"features": [
 				"UseOnboarding": "<none>",
 				"ProfilePosition": "top"
@@ -123,8 +149,11 @@ struct FeatureManagerTests {
 		let switcher = RandomSwitcher()
 		let manager2 = FeatureManager(switcher: switcher)
 		#expect({
-			if case .dictionary(let dict) = manager2.logMetadata["switcher"] {
-				return dict["type"] == .string(String(describing: switcher))
+			if
+				case .dictionary(let dict) = manager2.logCompleteMetadata["switcher"],
+				case .string(let type) = dict["type"]
+			{
+				return type == "RandomSwitcher"
 			}
 			return false
 		}())

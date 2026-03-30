@@ -93,7 +93,7 @@ public final class ConstantFeatureManagerFactory {
 	/// underlying ``ConstantSwitcher``.
 	///
 	/// - Returns: A fully bootstrapped ``FeatureManager``.
-	public func createBootstrappedManager() -> FeatureManager {
+	@MainActor public func createBootstrappedManager() -> FeatureManager {
 		let manager = FeatureManager(switcher: switcher)
 		features.forEach { manager.register($0) }
 		manager.synchronousBootstrap()
@@ -122,7 +122,7 @@ public final class ConstantFeatureManagerFactory {
 	/// - Parameter other: An existing ``FeatureManager`` whose switcher
 	///   and registered features are merged with the factory's configuration.
 	/// - Returns: A new, non-bootstrapped ``FeatureManager``.
-	public func multiplexed(with other: FeatureManager) -> FeatureManager {
+	@MainActor public func multiplexed(with other: FeatureManager) -> FeatureManager {
 		let manager = FeatureManager(switcher: switcher.multiplex(other.switcher))
 		for feature in other.features {
 			manager.register(feature)

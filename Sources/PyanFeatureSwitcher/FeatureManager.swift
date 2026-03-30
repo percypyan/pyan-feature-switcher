@@ -28,16 +28,23 @@ import Logging
 /// ```
 ///
 /// > Important: Call ``bootstrap()`` exactly once before querying state.
+/// Requesting a feature state before bootstrap will cause a `precondition`failure.
 @Observable
-public final class FeatureManager {
-	private var states: [String: any FeatureState]? = nil
-	internal private(set) var features: [any Feature.Type] = []
+public final class FeatureManager: Sendable {
+	@ObservationIgnored
+	nonisolated(unsafe) private var states: [String: any FeatureState]? = nil
+
+	@ObservationIgnored
+	nonisolated(unsafe) internal private(set) var features: [any Feature.Type] = []
 
 	/// The switcher responsible for resolving each registered feature's state during ``bootstrap()``.
 	internal let switcher: FeatureSwitcher
 
 	/// Indicates if this manager ready to use.
-	public var isReady: Bool { states != nil }
+	@MainActor public var isReady: Bool = false
+	/// Copy the ``isReady`` property but let us access it from outside the main thread safely and quickly.
+	/// The duplication allow us to ensure both observability and fast thread-safety, the cost is worthing it.
+	private let __isReady: Atomic<Bool> = .init(false)
 
 	/// Creates a manager that will use the given switcher to resolve feature states.
 	/// - Parameter switcher: The ``FeatureSwitcher`` responsible for generating states.
@@ -50,13 +57,15 @@ public final class FeatureManager {
 	/// Must be called exactly once. Calling it a second time triggers an assertion failure.
 	/// - Returns: `self`, for chaining.
 	@discardableResult
+	@MainActor
 	public func bootstrap() async throws -> Self {
-		guard !isReady else {
+		guard !__isReady.load(ordering: .acquiring) else {
 			assertionFailure("FeatureManager has already been bootstrapped")
 			return self
 		}
-
 		states = try await switcher.generateState(for: features)
+		isReady = true
+		__isReady.store(true, ordering: .releasing)
 		return self
 	}
 
@@ -64,7 +73,12 @@ public final class FeatureManager {
 	/// - Parameter type: The ``Feature`` type to register.
 	/// - Returns: `self`, for chaining.
 	@discardableResult
+	@MainActor
 	public func register<F: Feature>(_ type: F.Type) -> Self {
+		guard !__isReady.load(ordering: .acquiring) else {
+			assertionFailure("FeatureManager has already been bootstrapped")
+			return self
+		}
 		assert(
 			!features.contains(where: { $0.identifier == F.identifier }),
 			"Feature \(F.identifier) as already been registered"
@@ -77,7 +91,7 @@ public final class FeatureManager {
 	/// - Parameter feature: The ``Feature`` type to query.
 	/// - Returns: The resolved state, or the default one.
 	public func state<F: Feature>(of feature: F.Type) -> F.State {
-		assert(isReady, "FeatureManager has not been bootstrapped")
+		precondition(__isReady.load(ordering: .acquiring), "FeatureManager has not been bootstrapped")
 		assert(
 			features.contains { $0.identifier == F.identifier },
 			"Feature \(F.identifier) has not been registered"
@@ -98,7 +112,11 @@ extension FeatureManager {
 	/// Each entry maps a feature's ``Feature/identifier`` to the resolved state's
 	/// ``FeatureState/identifier``, or `"<unknown>"` when the manager has not yet
 	/// been bootstrapped.
+	///
+	/// > Info: Logging those metadata in a background thread at the same time the manager is being
+	/// boostrapped on the main thread is undefined behavior.
 	public var logMetadata: Logger.Metadata {
+		let isReady = __isReady.load(ordering: .acquiring)
 		var metaFeatures: Logger.Metadata = [:]
 		for feature in features {
 			metaFeatures[feature.identifier] = .string(
@@ -119,9 +137,12 @@ extension FeatureManager {
 	/// - `switcher` – The concrete switcher type and its own ``FeatureSwitcher/logMetadata``.
 	/// - `features` – Each registered feature's ``Feature/identifier`` mapped to
 	///   its resolved ``FeatureState/identifier``, or `"<unknown>"` before bootstrapping.
+	///
+	/// > Info: Logging those metadata in a background thread at the same time the manager is being
+	/// boostrapped on the main thread is undefined behavior.
 	public var logCompleteMetadata: Logger.Metadata {
 		var metadata: Logger.Metadata = [
-			"isReady": isReady ? "true" : "false"
+			"isReady": __isReady.load(ordering: .acquiring) ? "true" : "false"
 		]
 
 		metadata["switcher"] = .dictionary([
@@ -143,8 +164,9 @@ extension FeatureManager {
 }
 
 extension FeatureManager {
+	@MainActor
 	internal func synchronousBootstrap() {
-		guard !isReady else {
+		guard !__isReady.load(ordering: .acquiring) else {
 			assertionFailure("FeatureManager has already been bootstrapped")
 			return
 		}
@@ -153,5 +175,7 @@ extension FeatureManager {
 			return
 		}
 		states = switcher.generateState(for: features)
+		isReady = true
+		__isReady.store(true, ordering: .releasing)
 	}
 }
